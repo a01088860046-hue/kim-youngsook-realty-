@@ -36,3 +36,31 @@ document.querySelectorAll('.faq details').forEach(item => {
     });
   });
 });
+
+const blogCards = [...document.querySelectorAll('[data-blog-post]')];
+const blogDate = new Intl.DateTimeFormat('ko-KR', {
+  timeZone: 'Asia/Seoul',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit'
+});
+
+fetch('content/blog-posts.json', { cache: 'no-store' })
+  .then(response => {
+    if (!response.ok) throw new Error(`Blog feed HTTP ${response.status}`);
+    return response.json();
+  })
+  .then(data => {
+    const posts = Array.isArray(data.items) ? data.items.slice(0, blogCards.length) : [];
+    posts.forEach((post, index) => {
+      const card = blogCards[index];
+      const url = new URL(post.url);
+      if (url.hostname !== 'blog.naver.com' || !url.pathname.startsWith('/ysukkim33/')) return;
+      const publishedAt = new Date(post.publishedAt);
+      card.href = url.href;
+      card.querySelector('.tool-label').textContent = `BLOG · ${blogDate.format(publishedAt).replaceAll(' ', '').replace(/\.$/, '')}`;
+      card.querySelector('h3').textContent = post.title;
+      card.querySelector('p').textContent = post.excerpt;
+    });
+  })
+  .catch(error => console.info('Using the verified blog fallback cards.', error.message));
